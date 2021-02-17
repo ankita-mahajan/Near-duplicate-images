@@ -2,7 +2,6 @@ import 'package:image/image.dart' as imageLib;
 import 'hash.dart';
 
 class DifferenceHash extends Hash {
-
   String calculate(imageLib.Image img) {
     var resizedImg = imageLib.copyResize(img, 8);
     var grayImg = imageLib.grayscale(resizedImg);
@@ -16,8 +15,8 @@ class DifferenceHash extends Hash {
       }
     }
 
-    for (int i = 0; i < pixels.length-1; i++) {
-      pixels[i] > pixels[i+1] ? hash.add(1) : hash.add(0);
+    for (int i = 0; i < pixels.length - 1; i++) {
+      pixels[i] > pixels[i + 1] ? hash.add(1) : hash.add(0);
     }
 
     return hash.toString();

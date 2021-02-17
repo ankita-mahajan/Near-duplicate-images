@@ -1,7 +1,6 @@
 import 'package:image/image.dart' as imageLib;
 
 abstract class Hash {
-
   int compare(imageLib.Image img1, imageLib.Image img2) {
     String hash1 = calculate(img1);
     String hash2 = calculate(img2);
