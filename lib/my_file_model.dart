@@ -6,9 +6,5 @@ class MyFileModel {
   final String name;
   final Uint8List bytes;
 
-  MyFileModel({
-    @required this.path,
-    @required this.name,
-    @required this.bytes
-  });
+  MyFileModel({@required this.path, @required this.name, @required this.bytes});
 }

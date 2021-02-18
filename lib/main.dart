@@ -4,7 +4,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_file_manager/flutter_file_manager.dart';
+import 'package:imgs/TodoModel.dart';
 import 'package:path_provider_ex/path_provider_ex.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'difference_hash.dart';
 import 'package:image/image.dart'
     as imageLib; // Naming conflict with internal Image color class
@@ -19,12 +22,14 @@ class Duplicate {
   final int startIndex;
   final int endIndex;
   final List<MyFileModel> files;
+  // final BuildContext context;
 
   Duplicate({
     @required this.name,
     @required this.startIndex,
     @required this.endIndex,
     @required this.files,
+    // @required this.context,
   });
 }
 
@@ -32,7 +37,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MyPDFList(), //call MyPDF List file
+      home: ChangeNotifierProvider(
+        create: (context) => TodoModel(),
+        child: MyPDFList(),
+      ), //call MyPDF List file
     );
   }
 }
@@ -53,6 +61,8 @@ class _MyPDFList extends State<MyPDFList> {
   List<dynamic> duplicateFiles = [];
   int mid = 0;
   List<MyFileModel> shortListedFiles = [];
+  var list = [];
+
   int exactDuplicateCount = 0, nearDuplicateCount = 0;
   var isSelected = false;
   var mycolor = Colors.white;
@@ -78,43 +88,104 @@ class _MyPDFList extends State<MyPDFList> {
                   }
                 : null,
           ),
-          IconButton(
-            icon: Icon(Icons.delete_forever),
-            onPressed: isSelected
-                ? () {
-                    for (int i = 0; i < duplicateFiles.length; i++) {
-                      duplicateFiles[i].delete();
-                    }
-                    setState(() {
-                      getFiles();
-                    });
-                  }
-                : null,
-          ),
+          // IconButton(
+          //   icon: Icon(Icons.delete_forever),
+          //   onPressed: isSelected
+          //       ? () {
+          //           for (int i = 0; i < duplicateFiles.length; i++) {
+          //             duplicateFiles[i].delete();
+          //           }
+          //           setState(() {
+          //             getFiles();
+          //           });
+          //         }
+          //       : null,
+          // ),
         ],
       ),
-      body: duplicateFiles.isEmpty && noFiles == false
-          ? Center(child: Text("Searching Files.."))
-          : noFiles
-              ? Center(child: Text("No duplicate found"))
-              : ListView.builder(
-                  //if file/folder list is grabbed, then show here
-                  itemCount: duplicateFiles?.length ?? 0,
-                  itemBuilder: (context, index) {
-                    return Card(
-                      child: ListTile(
-                        selected: isSelected,
-                        title: Text(duplicateFiles[index].path.split('/').last),
-                        leading: Icon(Icons.picture_as_pdf),
-                      ),
-                    );
-                  },
-                ),
+      body: Consumer<TodoModel>(
+        builder: (context, todo, child) {
+          return todo.taskList.isEmpty
+              ? Center(child: Text("Searching Files.."))
+              : Container(
+                  margin: EdgeInsets.all(8.0),
+                  child: StaggeredGridView.countBuilder(
+                    itemCount: todo.taskList.length,
+                    crossAxisCount: 4,
+                    physics: BouncingScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      String imgPath =
+                          "https://ia-discourse.s3-us-west-1.amazonaws.com/original/2X/9/97d457372f6c14182b686ecfdf5d4067df5e9373.png";
+                      if (todo.taskList[index].path != null) {
+                        imgPath = todo.taskList[index].path;
+                      }
+                      return Stack(
+                        fit: StackFit.expand,
+                        children: <Widget>[
+                          Material(
+                            elevation: 8.0,
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                            shadowColor: Colors.black,
+                            child: InkWell(
+                              onTap: () {
+                                /*Navigator.push(
+                                            context,
+                                            new MaterialPageRoute(
+                                                builder: (context) =>
+                                                    new ViewPhotos(imgPath)));
+                                      */
+                              },
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: <Widget>[
+                                  Hero(
+                                    tag: imgPath,
+                                    child: Image.file(
+                                      File(imgPath),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  /* Container(
+                                        height: 20,
+                                        width: 20,
+                                        alignment: Alignment.topLeft,
+                                        child: Checkbox(
+                                          value: list[index],
+                                          onChanged: (bool value) {
+                                            setState(() {
+                                              list[index] = !list[index];
+                                            });
+                                            print(list[index]);
+                                            /* setState(() {
+                                        list[index] = value;
+                                        print(list[index]);
+                                      }); */
+                                          },
+                                          hoverColor: Colors.red,
+                                        ),
+                                      ),*/
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    staggeredTileBuilder: (i) =>
+                        StaggeredTile.count(2, i.isEven ? 2 : 3),
+                    mainAxisSpacing: 8.0,
+                    crossAxisSpacing: 8.0,
+                  ),
+                );
+        },
+      ),
     );
   }
 
-  void getFiles() async {
+  Future<void> getFiles() async {
     //asyn function to get list of files
+    //list = new List.filled(shortListedFiles.length, true, growable: true);
+
     List<StorageInfo> storageInfo = await PathProviderEx.getStorageInfo();
     var root = storageInfo[0]
         .rootDir; //storageInfo[1] for SD card, geting the root directory
@@ -154,6 +225,7 @@ class _MyPDFList extends State<MyPDFList> {
         startIndex: 0,
         endIndex: mid,
         files: shortListedFiles,
+        // context: ctx,
       ),
     );
 
@@ -164,6 +236,7 @@ class _MyPDFList extends State<MyPDFList> {
         startIndex: mid,
         endIndex: shortListedFiles.length,
         files: shortListedFiles,
+        // context: ctx,
       ),
     );
 
@@ -197,10 +270,15 @@ findDuplicates(Duplicate data) {
             imageLib.decodeImage(data.files[i].bytes),
             imageLib.decodeImage(data.files[j].bytes));
         print('${data.name} $i $j $difference ');
-        // await Future.delayed(Duration(seconds: 2));
         if (difference == 0)
           exactDuplicateCount++;
-        else if (difference <= 10 && difference >= 1) nearDuplicateCount++;
+        else if (difference <= 10 && difference >= 1) {
+          // Provider.of<TodoModel>(data.context, listen: false).addDupInList(
+          //     data.files[i].path,
+          //     data.files[i].path.split("/").last,
+          //     data.files[i].bytes);
+          nearDuplicateCount++;
+        }
       } catch (e) {
         print(e);
       }
