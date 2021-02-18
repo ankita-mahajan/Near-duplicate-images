@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_file_manager/flutter_file_manager.dart';
+import 'package:get/get.dart';
+import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:imgs/TodoModel.dart';
 import 'package:path_provider_ex/path_provider_ex.dart';
 import 'package:provider/provider.dart';
@@ -13,30 +15,15 @@ import 'package:image/image.dart'
     as imageLib; // Naming conflict with internal Image color class
 //import package files
 
-import './my_file_model.dart';
+import './models/models.dart';
+import './providers/providers.dart';
 
 void main() => runApp(MyApp());
-
-class Duplicate {
-  final String name;
-  final int startIndex;
-  final int endIndex;
-  final List<MyFileModel> files;
-  // final BuildContext context;
-
-  Duplicate({
-    @required this.name,
-    @required this.startIndex,
-    @required this.endIndex,
-    @required this.files,
-    // @required this.context,
-  });
-}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       home: ChangeNotifierProvider(
         create: (context) => TodoModel(),
         child: MyPDFList(),
@@ -54,6 +41,9 @@ class MyPDFList extends StatefulWidget {
 }
 
 class _MyPDFList extends State<MyPDFList> {
+  final DuplicateCountController controller =
+      Get.put(DuplicateCountController());
+
   List<File> files;
   List<Uint8List> hashfiles = [];
   Map<String, Uint8List> dupFiles = {};
@@ -184,8 +174,6 @@ class _MyPDFList extends State<MyPDFList> {
 
   Future<void> getFiles() async {
     //asyn function to get list of files
-    //list = new List.filled(shortListedFiles.length, true, growable: true);
-
     List<StorageInfo> storageInfo = await PathProviderEx.getStorageInfo();
     var root = storageInfo[0]
         .rootDir; //storageInfo[1] for SD card, geting the root directory
@@ -218,25 +206,26 @@ class _MyPDFList extends State<MyPDFList> {
     print(shortListedFiles.length);
     //calculating mid for splitting the execution in two threads
     mid = (shortListedFiles.length / 2).floor();
+
     Isolate.spawn(
       findDuplicates,
-      Duplicate(
+      DuplicateFile(
         name: 'Thread 1',
         startIndex: 0,
         endIndex: mid,
         files: shortListedFiles,
-        // context: ctx,
+        // controller: controller,
       ),
     );
 
     Isolate.spawn(
       findDuplicates,
-      Duplicate(
+      DuplicateFile(
         name: 'Thread 2',
         startIndex: mid,
         endIndex: shortListedFiles.length,
         files: shortListedFiles,
-        // context: ctx,
+        // controller: controller,
       ),
     );
 
@@ -261,8 +250,10 @@ class _MyPDFList extends State<MyPDFList> {
 }
 
 //isolates
-findDuplicates(Duplicate data) {
-  int exactDuplicateCount = 0, nearDuplicateCount = 0;
+findDuplicates(DuplicateFile data) {
+  DuplicateCountController controller = Get.put(DuplicateCountController());
+
+  // int exactDuplicateCount = 0, nearDuplicateCount = 0;
   for (int i = data.startIndex; i < data.endIndex; i++) {
     for (int j = i + 1; j < data.endIndex; j++) {
       try {
@@ -270,14 +261,12 @@ findDuplicates(Duplicate data) {
             imageLib.decodeImage(data.files[i].bytes),
             imageLib.decodeImage(data.files[j].bytes));
         print('${data.name} $i $j $difference ');
-        if (difference == 0)
-          exactDuplicateCount++;
-        else if (difference <= 10 && difference >= 1) {
-          // Provider.of<TodoModel>(data.context, listen: false).addDupInList(
-          //     data.files[i].path,
-          //     data.files[i].path.split("/").last,
-          //     data.files[i].bytes);
-          nearDuplicateCount++;
+        if (difference == 0) {
+          controller.incrementExact();
+          // exactDuplicateCount++;
+        } else if (difference <= 10 && difference >= 1) {
+          controller.incrementNear();
+          // nearDuplicateCount++;
         }
       } catch (e) {
         print(e);
@@ -285,6 +274,6 @@ findDuplicates(Duplicate data) {
     }
   }
 
-  print('${data.name} Exact : $exactDuplicateCount');
-  print('${data.name} Near : $nearDuplicateCount');
+  print('${data.name} Exact : ${controller.exactDuplicateCount}');
+  print('${data.name} Near : ${controller.nearDuplicateCount}');
 }

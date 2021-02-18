@@ -21,9 +21,6 @@ environment:
   sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
-  image: 2.0.7
-  http: ^0.12.0
-  threading: ^0.0.10
   
 
   flutter:
@@ -33,16 +30,20 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
+  image: 2.0.7
+  http: ^0.12.0
+  threading: ^0.0.10
   path: 
   path_provider_ex: 
   flutter_file_manager: 
   provider:
   flutter_staggered_grid_view: 
   flutter_fab_dialer: 
+  get:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
     # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
