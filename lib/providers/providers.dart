@@ -1,1 +1,1 @@
-export './duplicate_count_controller.dart';
+export './duplicate_count_provider.dart';
