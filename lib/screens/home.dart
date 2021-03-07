@@ -1,12 +1,9 @@
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 import 'package:image/image.dart' as imageLib;
 import 'package:path_provider_ex/path_provider_ex.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -40,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    controller = Get.find();
+    controller = Get.put(DuplicateCountProvider());
     requestStoragePermission();
     // getFiles(); //call getFiles() function on initial state.
     super.initState();
@@ -103,14 +100,14 @@ class _HomeScreenState extends State<HomeScreen> {
               : Container(
                   margin: EdgeInsets.all(8.0),
                   child: StaggeredGridView.countBuilder(
-                    itemCount: provider.duplicateFilesList.length,
+                    itemCount: provider.result.length,
                     crossAxisCount: 4,
                     physics: BouncingScrollPhysics(),
                     itemBuilder: (context, index) {
                       String imgPath =
                           "https://ia-discourse.s3-us-west-1.amazonaws.com/original/2X/9/97d457372f6c14182b686ecfdf5d4067df5e9373.png";
-                      if (provider.duplicateFilesList[index].path != null) {
-                        imgPath = provider.duplicateFilesList[index].path;
+                      if (provider.result[index].path != null) {
+                        imgPath = provider.result[index].path;
                       }
                       return Stack(
                         fit: StackFit.expand,
@@ -198,6 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
             path: controller.files[i].path,
             name: controller.files[i].path.split("/").last,
             bytes: bytes,
+            modifiedTime: lastModifiedTime,
           ),
         );
       }
@@ -206,8 +204,15 @@ class _HomeScreenState extends State<HomeScreen> {
     ///printing length of shortlisted images
     print(controller.shortListedFiles.length);
 
-    for (int i = 0; i < controller.shortListedFiles.length - 1; i++) {
-      for (int j = i + 1; j < controller.shortListedFiles.length - 1; j++) {
+    controller.shortListedFiles
+        .sort((a, b) => a.modifiedTime.isAfter(b.modifiedTime) ? 0 : 1);
+
+    // for (int i = 0; i < controller.shortListedFiles.length; i++) {
+    //   controller.addDupInList(controller.shortListedFiles[i]);
+    // }
+
+    for (int i = 0; i < controller.shortListedFiles.length; i++) {
+      for (int j = i + 1; j < controller.shortListedFiles.length; j++) {
         try {
           int difference = DifferenceHash().compare(
             imageLib.decodeImage(controller.shortListedFiles[i].bytes),
@@ -216,10 +221,10 @@ class _HomeScreenState extends State<HomeScreen> {
             j,
           );
           print('$i $j $difference ');
-          if (difference <= 4 && difference >= 0) {
+          if (difference == 0) {
             controller.incrementExact();
             controller.addDupInList(controller.shortListedFiles[i]);
-          } else if (difference <= 15 && difference >= 4) {
+          } else if (difference <= 4 && difference >= 1) {
             controller.incrementNear();
             controller.addDupInList(controller.shortListedFiles[i]);
           }
@@ -266,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
     //   print('Exact Count : ${controller.exactDuplicateCount}');
     //   print('Near Count : ${controller.nearDuplicateCount}');
     // });
-
+    
     controller.refreshScreen();
     print('Exact Count : ${controller.exactDuplicateCount}');
     print('Near Count : ${controller.nearDuplicateCount}');

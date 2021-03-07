@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:collection';
 
 import 'package:get/get.dart';
 import 'package:imgs/models/models.dart';
@@ -10,6 +11,7 @@ class DuplicateCountProvider extends GetxController {
   List<File> files = [];
   List<MyFileModel> shortListedFiles = [];
   List<MyFileModel> duplicateFilesList = [];
+  List<MyFileModel> result = [];
   List<String> hashedFiles = [];
 
   incrementExact() => exactDuplicateCount++;
@@ -18,5 +20,8 @@ class DuplicateCountProvider extends GetxController {
 
   addDupInList(MyFileModel file) => duplicateFilesList.add(file);
 
-  refreshScreen() => update();
+  refreshScreen() {
+    result = LinkedHashSet<MyFileModel>.from(duplicateFilesList).toList();
+    update();
+  }
 }

@@ -28,12 +28,35 @@ abstract class Hash {
     //     ? calculate(img2)
     //     : controller.hashedFiles[j];
     int distance = 0;
-
-    for (int i = 0; i < hash1.length; i++) {
-      if (hash1[i] != hash2[i]) {
-        distance++;
+    print('Hash1 : ${hash1.length}, Hash2 : ${hash2.length}');
+    if (hash1.length > hash2.length) {
+      int hashDifference = hash1.length - hash2.length;
+      if (hashDifference > 20) {
+        distance = 5;
+      } else {
+        for (int i = 0; i < hash2.length; i++) {
+          if (hash1[i] != hash2[i]) {
+            distance++;
+          }
+        }
+      }
+    } else {
+      int hashDifference = hash2.length - hash1.length;
+      if (hashDifference > 20) {
+        distance = 5;
+      } else {
+        for (int i = 0; i < hash1.length; i++) {
+          if (hash1[i] != hash2[i]) {
+            distance++;
+          }
+        }
       }
     }
+    // for (int i = 0; i < hash1.length; i++) {
+    //   if (hash1[i] != hash2[i]) {
+    //     distance++;
+    //   }
+    // }
 
     return distance;
   }
