@@ -22,16 +22,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   DuplicateCountProvider controller;
-  // List<File> files;
-  // List<Uint8List> hashfiles = [];
+
   Map<String, Uint8List> dupFiles = {};
   bool noFiles = false;
-  List<dynamic> duplicateFiles = [];
+
   int mid = 0;
-  // List<MyFileModel> shortListedFiles = [];
   var list = [];
 
-  int exactDuplicateCount = 0, nearDuplicateCount = 0;
   var isSelected = false;
   var mycolor = Colors.white;
 
@@ -39,7 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     controller = Get.put(DuplicateCountProvider());
     requestStoragePermission();
-    // getFiles(); //call getFiles() function on initial state.
     super.initState();
   }
 
@@ -66,30 +62,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("PDF File list from SD Card"),
+        title: Text("Smart File Manager"),
         backgroundColor: Colors.redAccent,
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.select_all),
-            onPressed: duplicateFiles.isNotEmpty
-                ? () {
-                    toggleSelection();
-                  }
-                : null,
+            onPressed: () {},
           ),
-          // IconButton(
-          //   icon: Icon(Icons.delete_forever),
-          //   onPressed: isSelected
-          //       ? () {
-          //           for (int i = 0; i < duplicateFiles.length; i++) {
-          //             duplicateFiles[i].delete();
-          //           }
-          //           setState(() {
-          //             getFiles();
-          //           });
-          //         }
-          //       : null,
-          // ),
         ],
       ),
       body: GetBuilder<DuplicateCountProvider>(
@@ -178,9 +157,17 @@ class _HomeScreenState extends State<HomeScreen> {
     var root = storageInfo[0].rootDir;
     //storageInfo[1] for SD card, geting the root directory
 
-    await _fetchFiles(root + '/DCIM/Camera/');
-    // await _fetchFiles(root + '/Download/');
-    await _fetchFiles(root + '/DCIM/');
+    try {
+      await _fetchFiles(root + '/DCIM/Camera/');
+    } catch (_) {}
+
+    try {
+      await _fetchFiles(root + '/Download/');
+    } catch (_) {}
+
+    try {
+      await _fetchFiles(root + '/DCIM/');
+    } catch (_) {}
 
     DateTime todaysDate = DateTime.now();
     DateTime duration = todaysDate.subtract(Duration(days: 5));
@@ -271,12 +258,12 @@ class _HomeScreenState extends State<HomeScreen> {
     //   print('Exact Count : ${controller.exactDuplicateCount}');
     //   print('Near Count : ${controller.nearDuplicateCount}');
     // });
-    
+
     controller.refreshScreen();
     print('Exact Count : ${controller.exactDuplicateCount}');
     print('Near Count : ${controller.nearDuplicateCount}');
 
-    if (duplicateFiles.isEmpty) {
+    if (controller.result.isEmpty) {
       noFiles = true;
     }
 
@@ -288,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
     List<dynamic> listImage = List<dynamic>();
     await myDir.list().forEach((element) {
       RegExp regExp = RegExp(
-        "\.(gif|jpe?g|tiff?|png|webp|bmp)",
+        "\.(jpe?g|png)",
         caseSensitive: false,
       );
       // Only add in List if path is an image
